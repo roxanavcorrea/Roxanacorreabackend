@@ -1,9 +1,13 @@
 import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import fs from 'fs';
 
-const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const productsFile = './data/productos.json';
+const router = express.Router();
+const productsFile = join(__dirname, '../data/productos.json');  
 
 function readJSONFile(filename) {
     try {

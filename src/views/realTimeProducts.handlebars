@@ -35,6 +35,7 @@
 
         socket.on('updateProducts', (newProduct) => {
             const li = document.createElement('li');
+            li.dataset.id = newProduct.id;
             li.textContent = `${newProduct.title} - ${newProduct.price}`;
             productList.appendChild(li);
         });

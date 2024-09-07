@@ -1,9 +1,13 @@
 import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import fs from 'fs';
 
-const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const productsFile = './data/productos.json';
+const router = express.Router();
+const productsFile = join(__dirname, '../data/productos.json');
 
 function readJSONFile(filename) {
     try {
@@ -48,8 +52,9 @@ export default (io) => {
         products.push(newProduct);
         writeJSONFile(productsFile, products);
 
+        console.log('Producto añadido:', newProduct);
+        
         io.emit('productAdded', newProduct);
-
         res.status(201).json(newProduct);
     });
 
@@ -77,7 +82,7 @@ export default (io) => {
     router.delete('/:pid', (req, res) => {
         const { pid } = req.params;
         const productIndex = products.findIndex(p => p.id === parseInt(pid));
-
+        
         if (productIndex === -1) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
@@ -85,10 +90,12 @@ export default (io) => {
         const deletedProduct = products.splice(productIndex, 1)[0];
         writeJSONFile(productsFile, products);
 
-        io.emit('productDeleted', deletedProduct.id);
+        console.log('Producto eliminado:', deletedProduct);
 
+        io.emit('productDeleted', deletedProduct.id);
         res.status(204).send();
     });
 
     return router;
 };
+
