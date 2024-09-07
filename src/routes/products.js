@@ -5,91 +5,90 @@ const router = express.Router();
 
 const productsFile = './data/productos.json';
 
-function readJSONFile(filename) { 
+function readJSONFile(filename) {
     try {
         const data = fs.readFileSync(filename, 'utf-8');
         return JSON.parse(data);
     } catch (err) {
-        console.log(`error leyendo ${filename}:`, err);
-        return[];
+        console.log(`Error leyendo ${filename}:`, err);
+        return [];
     }
 }
 
 function writeJSONFile(filename, data) {
     try {
-        fs.writeFileSync(filename, JSON.stringify(data, null,2));
+        fs.writeFileSync(filename, JSON.stringify(data, null, 2));
     } catch (err) {
-        console.log(`Error escribiendo ${filename}:`,err);
+        console.log(`Error escribiendo ${filename}:`, err);
     }
 }
 
 let products = readJSONFile(productsFile);
 
-//get
+export default (io) => {
+    router.get('/', (req, res) => {
+        const limit = req.query.limit;
+        const limitedProducts = limit ? products.slice(0, limit) : products;
+        res.json(limitedProducts);
+    });
 
-router.get('/',(req, res) => {
-    const limit = req.query.limit;
-    const limitedProducts = limit ? products.slice(0, limit) : products;
-    res.json(limitedProducts);
-});
+    router.get('/:pid', (req, res) => {
+        const { pid } = req.params;
+        const product = products.find(p => p.id === parseInt(pid));
+        if (!product) {
+            return res.status(404).json({ error: 'Producto No encontrado' });
+        }
+        res.json(product);
+    });
 
-router.get('/:pid', (req,res) => {
-    const { pid } = req.params;
-    const product = products.find(p => p.id === parseInt(pid));
-    if (!product) {
-        return res.status(404).json({ error: 'Producto No encontrado'});
+    router.post('/', (req, res) => {
+        const { title, description, code, price, stock, category, thumbnails } = req.body;
+        const id = products.length + 1;
+        const newProduct = { id, title, description, code, price, stock, category, thumbnails, status: true };
+        products.push(newProduct);
+        writeJSONFile(productsFile, products);
 
-    }
-    res.json(product);
-});
+        io.emit('productAdded', newProduct);
 
-// Post 
+        res.status(201).json(newProduct);
+    });
 
-router.post('/', (req, res) => {
-    const { title, description, code, price, stock, category, thumbnails} = req.body;
-const id = products.length + 1;
-const newProduct = { id, title, description, code, price, stock, category, thumbnails, status: true};
-products.push(newProduct);
-writeJSONFile(productsFile, products);
-res.status(201).json(newProduct);
-});
+    router.put('/:pid', (req, res) => {
+        const { pid } = req.params;
+        const { title, description, code, price, stock, category, thumbnails } = req.body;
 
-// PUT
+        const product = products.find(p => p.id === parseInt(pid));
+        if (!product) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
 
-router.put('/:pid', (req, res) => {
-    const { pid } =req.params;
-    const { title, description, code, price, stock, category,thumbnails} = req.body;
+        if (title) product.title = title;
+        if (description) product.description = description;
+        if (code) product.code = code;
+        if (price) product.price = price;
+        if (stock) product.stock = stock;
+        if (category) product.category = category;
+        if (thumbnails) product.thumbnails = thumbnails;
 
-    const product = products.find(p => p.id === parseInt(pid));
-    if (!product) {
-        return res.status(404).json({ error: 'producto no encontrado'});
-    }
+        writeJSONFile(productsFile, products);
+        res.json(product);
+    });
 
-    if (title) product.title = title;
-    if (description) product.description = description;
-    if (code) product.code = code;
-    if (price) product.price = price; 
-    if (stock) product.stock = stock; 
-    if (category) product.category = category;
-    if (thumbnails) product.thumbnails = thumbnails;
+    router.delete('/:pid', (req, res) => {
+        const { pid } = req.params;
+        const productIndex = products.findIndex(p => p.id === parseInt(pid));
 
-    writeJSONFile(productsFile, products);
-    res.json(product);
+        if (productIndex === -1) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
 
-});
+        const deletedProduct = products.splice(productIndex, 1)[0];
+        writeJSONFile(productsFile, products);
 
-// DELETE 
+        io.emit('productDeleted', deletedProduct.id);
 
-router.delete ('/:pid', (req, res) => {
-    const { pid } = req.params;
-    const productIndex = products.findIndex(p => p.id === parseInt (pid));
+        res.status(204).send();
+    });
 
-    if (productIndex === -1) {
-        return res.status(404).json({error: 'producto no encontrado'});
-    }
-    products.splice(productIndex, 1);
-    writeJSONFile(productsFile, products);
-    res.status(204).send();
-});
-
-module.exports = router;
+    return router;
+};

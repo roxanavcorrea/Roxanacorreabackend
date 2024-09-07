@@ -1,19 +1,39 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { engine } from 'express-handlebars';
+import path from 'path';
+import { fileURLToPath } from 'url'; 
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 8080;
 
+const server = createServer(app);
+const io = new Server(server);
+
+// Configurar Handlebars
+app.engine('handlebars', engine());
+app.set('view engine', 'handlebars');
+app.set('views', path.join(__dirname, 'views'));
+
+
 app.use(express.json());
 
-const productsRouter = require('./routes/products');
-const cartsRouter = require('./routes/carts');
+import productsRouter from './routes/products.js';
+import cartsRouter from './routes/carts.js';
+import viewsRouter from './routes/views.js';
 
-app.use('/api/products.js', productsRouter);
-app.use('/api/carts.js', cartsRouter);
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
+app.use('/', viewsRouter);
 
-app.listen(PORT, () =>{
-    console.log(`servidor escuchando el puerto ${PORT}`);
-
+// WebSocket
+io.on('connection', (socket) => {
+    console.log('Nuevo cliente conectado');
 });
 
-// Verificar porque no me toma el comando en la terminal 
+server.listen(PORT, () => {
+    console.log(`Servidor escuchando en el puerto ${PORT}`);
+});

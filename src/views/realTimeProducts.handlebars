@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos en Tiempo Real</title>
+</head>
+<body>
+    <h1>Lista de Productos (Tiempo Real)</h1>
+    <ul id="productList">
+        {{#each products}}
+            <li data-id="{{this.id}}">{{this.title}} - {{this.price}}</li>
+        {{/each}}
+    </ul>
+
+    <h2>Añadir Producto</h2>
+    <form id="addProductForm">
+        <input type="text" id="title" placeholder="Título" required>
+        <input type="number" id="price" placeholder="Precio" required>
+        <button type="submit">Añadir Producto</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const productList = document.getElementById('productList');
+        const form = document.getElementById('addProductForm');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            socket.emit('productAdded', { title, price });
+        });
+
+        socket.on('updateProducts', (newProduct) => {
+            const li = document.createElement('li');
+            li.textContent = `${newProduct.title} - ${newProduct.price}`;
+            productList.appendChild(li);
+        });
+
+        socket.on('removeProduct', (productId) => {
+            const product = document.querySelector(`li[data-id="${productId}"]`);
+            if (product) product.remove();
+        });
+    </script>
+</body>
+</html>
