@@ -1,101 +1,36 @@
 import express from 'express';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import Product from '../data/models/product.js';
 
 const router = express.Router();
-const productsFile = join(__dirname, '../data/productos.json');
 
-function readJSONFile(filename) {
+router.get('/', async (req, res) => {
+    const { limit = 10, page = 1, sort, query } = req.query;
+
+    const filter = query ? { category: query } : {}; // Filtrar por categoría si existe query
+    const sortOption = sort === 'asc' ? { price: 1 } : sort === 'desc' ? { price: -1 } : {};
+
     try {
-        const data = fs.readFileSync(filename, 'utf-8');
-        return JSON.parse(data);
-    } catch (err) {
-        console.log(`Error leyendo ${filename}:`, err);
-        return [];
+        const products = await Product.paginate(filter, {
+            limit: parseInt(limit),
+            page: parseInt(page),
+            sort: sortOption,
+        });
+
+        res.json({
+            status: 'success',
+            payload: products.docs,
+            totalPages: products.totalPages,
+            prevPage: products.prevPage,
+            nextPage: products.nextPage,
+            page: products.page,
+            hasPrevPage: products.hasPrevPage,
+            hasNextPage: products.hasNextPage,
+            prevLink: products.hasPrevPage ? `/api/products?page=${products.prevPage}&limit=${limit}` : null,
+            nextLink: products.hasNextPage ? `/api/products?page=${products.nextPage}&limit=${limit}` : null,
+        });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
     }
-}
+});
 
-function writeJSONFile(filename, data) {
-    try {
-        fs.writeFileSync(filename, JSON.stringify(data, null, 2));
-    } catch (err) {
-        console.log(`Error escribiendo ${filename}:`, err);
-    }
-}
-
-let products = readJSONFile(productsFile);
-
-export default (io) => {
-    router.get('/', (req, res) => {
-        const limit = req.query.limit;
-        const limitedProducts = limit ? products.slice(0, limit) : products;
-        res.json(limitedProducts);
-    });
-
-    router.get('/:pid', (req, res) => {
-        const { pid } = req.params;
-        const product = products.find(p => p.id === parseInt(pid));
-        if (!product) {
-            return res.status(404).json({ error: 'Producto No encontrado' });
-        }
-        res.json(product);
-    });
-
-    router.post('/', (req, res) => {
-        const { title, description, code, price, stock, category, thumbnails } = req.body;
-        const id = products.length + 1;
-        const newProduct = { id, title, description, code, price, stock, category, thumbnails, status: true };
-        products.push(newProduct);
-        writeJSONFile(productsFile, products);
-
-        console.log('Producto añadido:', newProduct);
-        
-        io.emit('productAdded', newProduct);
-        res.status(201).json(newProduct);
-    });
-
-    router.put('/:pid', (req, res) => {
-        const { pid } = req.params;
-        const { title, description, code, price, stock, category, thumbnails } = req.body;
-
-        const product = products.find(p => p.id === parseInt(pid));
-        if (!product) {
-            return res.status(404).json({ error: 'Producto no encontrado' });
-        }
-
-        if (title) product.title = title;
-        if (description) product.description = description;
-        if (code) product.code = code;
-        if (price) product.price = price;
-        if (stock) product.stock = stock;
-        if (category) product.category = category;
-        if (thumbnails) product.thumbnails = thumbnails;
-
-        writeJSONFile(productsFile, products);
-        res.json(product);
-    });
-
-    router.delete('/:pid', (req, res) => {
-        const { pid } = req.params;
-        const productIndex = products.findIndex(p => p.id === parseInt(pid));
-        
-        if (productIndex === -1) {
-            return res.status(404).json({ error: 'Producto no encontrado' });
-        }
-
-        const deletedProduct = products.splice(productIndex, 1)[0];
-        writeJSONFile(productsFile, products);
-
-        console.log('Producto eliminado:', deletedProduct);
-
-        io.emit('productDeleted', deletedProduct.id);
-        res.status(204).send();
-    });
-
-    return router;
-};
-
+export default router;

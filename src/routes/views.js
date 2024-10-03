@@ -2,6 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import Cart from '../data/models/cart.js';  // Importa el modelo de carrito
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,9 +27,21 @@ router.get('/', (req, res) => {
 });
 
 // Ruta para la vista realTimeProducts
-router.get('/realtimeproducts', (req, res) => {
+router.get('/realtimeproducts.handlebars', (req, res) => {
     const products = readJSONFile(productsFile);
-    res.render('realTimeProducts', { products });
+    res.render('realTimeProducts.handlebars', { products });
+});
+
+// NUEVA RUTA: Vista de un carrito específico con productos completos
+router.get('/carts/:cid', async (req, res) => {
+    try {
+        const cart = await Cart.findById(req.params.cid).populate('products.product');
+        if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
+
+        res.render('cart', { products: cart.products });  // Renderiza la vista 'cart' con los productos
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 export default router;
