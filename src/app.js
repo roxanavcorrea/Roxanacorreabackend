@@ -1,4 +1,6 @@
 import express from 'express';
+import product from './data/models/product.js';
+import cart from './data/models/cart.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
@@ -44,8 +46,8 @@ mongoose.connect('mongodb+srv://roxanacorrea33:KNEy2QkPhN7uIvOx@cluster0.qtwb3.m
 // Rutas
 import productsRouter from './routes/products.js';
 import cartsRouter from './routes/carts.js';
-app.use('/api/products', productsRouter);
-app.use('/api/carts', cartsRouter);
+app.use('/api/product', productsRouter);
+app.use('/api/cart', cartsRouter);
 
 // Iniciar servidor
 server.listen(PORT, () => {

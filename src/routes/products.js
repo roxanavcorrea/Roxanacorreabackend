@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
             sort: sortOption,
         });
 
-        res.json({
+        res.json({ 
             status: 'success',
             payload: products.docs,
             totalPages: products.totalPages,
