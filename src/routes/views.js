@@ -2,7 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
-import Cart from '../data/models/cart.js';  // Importa el modelo de carrito
+import Cart from '../data/models/cart.js'; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,7 +38,7 @@ router.get('/carts/:cid', async (req, res) => {
         const cart = await Cart.findById(req.params.cid).populate('products.product');
         if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
 
-        res.render('cart', { products: cart.products });  // Renderiza la vista 'cart' con los productos
+        res.render('cart', { products: cart.products });  
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

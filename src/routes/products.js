@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
     const { limit = 10, page = 1, sort, query } = req.query;
 
-    const filter = query ? { category: query } : {}; // Filtrar por categoría si existe query
+    const filter = query ? { category: query } : {}; 
     const sortOption = sort === 'asc' ? { price: 1 } : sort === 'desc' ? { price: -1 } : {};
 
     try {

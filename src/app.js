@@ -6,9 +6,11 @@ import path from 'path';
 import { fileURLToPath } from 'url'; 
 import connectDB from './config/db.js'; 
 import dotenv from 'dotenv'; 
+import mongoose from 'mongoose';
 
 dotenv.config();
-console.log('MONGO_URI:', process.env.MONGO_URI);
+console.log("MONGO_URI:", process.env.MONGO_URI);
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,15 +28,18 @@ const io = new Server(server);
 
 // Configurar Handlebars
 app.engine('handlebars', engine({
-    layoutsDir: path.join(__dirname, '../views/layouts'), // Asegúrate de que sea correcto
+    layoutsDir: path.join(__dirname, '../views/layouts'), 
     defaultLayout: 'main'
 }));
 app.set('view engine', 'handlebars');
-app.set('views', path.join(__dirname, '../views')); // Asegúrate de que sea correcto
+app.set('views', path.join(__dirname, '../views')); 
 
 // Configurar middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+//Conexión a Mongoose
+mongoose.connect('mongodb+srv://roxanacorrea33:KNEy2QkPhN7uIvOx@cluster0.qtwb3.mongodb.net/miBaseDeDatos?retryWrites=true&w=majority&appName=Cluster0');
 
 // Rutas
 import productsRouter from './routes/products.js';
