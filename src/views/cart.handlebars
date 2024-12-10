@@ -12,6 +12,11 @@
             <li>{{this.product.title}} - {{this.product.price}}</li>
         {{/each}}
     </ul>
+<!-- Botón para finalizar compra -->
+<form method="POST" action="/api/carts/{{cartId}}/purchase">
+    <button type="submit">Finalizar Compra</button>
+</form>
+
     <a href="/">Volver a la lista de productos</a>
 </body>
 </html>
